@@ -10,6 +10,7 @@ import 'package:start_up_namer/Data/Repository.dart';
 import 'package:start_up_namer/Models/word_pair.dart';
 
 import 'package:start_up_namer/Routes/route.dart' as route;
+import 'package:start_up_namer/add_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -53,7 +54,6 @@ class _RandomWordsState extends State<RandomWords> {
   final _biggerFont = const TextStyle(fontSize: 18);
   late String firstWord;
   late String secondWord;
-  
 
   @override
   Widget build(BuildContext context) {
@@ -75,12 +75,23 @@ class _RandomWordsState extends State<RandomWords> {
                             AppController.instance.changeView();
                           },
                         ),
+                      ),                      
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, route.AddPage);
+                        },
+                        icon: const Icon(
+                          Icons.add,
+                          color: Colors.black,
+                        ),
+                        tooltip: 'Adicionar',
                       ),
                       IconButton(
+                        tooltip: 'Sugestões salvas',
+                        icon: const Icon(Icons.list, color: Colors.black),
                         onPressed: _pushSaved,
-                        icon: const Icon(Icons.list),
-                        tooltip: 'Saved Suggestions',
-                      )
+                      ),
+
                     ],
                     titleTextStyle: TextStyle(color: Colors.black),
                     backgroundColor: Colors.white,
@@ -101,9 +112,9 @@ class _RandomWordsState extends State<RandomWords> {
             mainAxisSpacing: 20),
         itemBuilder: (BuildContext ctx, index) {
           final int qnt = index;
-          if (qnt >= _suggestions.length) {
-            _suggestions.addAll(Repository().Listar());
-          }
+
+          _suggestions.addAll(Repository().Listar());
+
           return _buildRow(_suggestions[qnt]);
         });
   }
@@ -112,15 +123,9 @@ class _RandomWordsState extends State<RandomWords> {
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemBuilder: (BuildContext _context, int i) {
-        if (i.isOdd) {
-          return Divider();
-        }
-        final int index = i ~/ 2;
+        _suggestions.addAll(Repository.instance.Listar());
 
-        if (index >= _suggestions.length) {
-          _suggestions.addAll(Repository.instance.Listar());
-        }
-        return _buildRow(_suggestions[index]);
+        return _buildRow(_suggestions[i]);
       },
     );
   }
@@ -151,7 +156,6 @@ class _RandomWordsState extends State<RandomWords> {
         },
       ),
       onTap: () {
-        
         int index = Repository.instance.pairList
             .indexWhere((element) => element.palavra == pair.palavra);
 
