@@ -6,7 +6,10 @@ import 'dart:core';
 
 import 'package:english_words/english_words.dart';
 import 'package:flutter/material.dart';
-import 'package:start_up_namer/edit_page.dart';
+import 'package:start_up_namer/Data/Repository.dart';
+import 'package:start_up_namer/Models/word_pair.dart';
+
+import 'package:start_up_namer/Routes/route.dart' as route;
 
 void main() {
   runApp(const MyApp());
@@ -22,8 +25,10 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
-    final wordPair = WordPair.random();
-    return MaterialApp(title: 'Welcome to Flutter', home: RandomWords());
+    return MaterialApp(
+        onGenerateRoute: route.controller,
+        title: 'Welcome to Flutter',
+        home: RandomWords());
   }
 }
 
@@ -43,11 +48,12 @@ class AppController extends ChangeNotifier {
 }
 
 class _RandomWordsState extends State<RandomWords> {
-  final _suggestions = <WordPair>[];
-  final _saved = <WordPair>{};
+  final _suggestions = <ParPalavras>[];
+  final _saved = <ParPalavras>{};
   final _biggerFont = const TextStyle(fontSize: 18);
   late String firstWord;
   late String secondWord;
+  
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +102,7 @@ class _RandomWordsState extends State<RandomWords> {
         itemBuilder: (BuildContext ctx, index) {
           final int qnt = index;
           if (qnt >= _suggestions.length) {
-            _suggestions.addAll(generateWordPairs().take(10));
-            
+            _suggestions.addAll(Repository().Listar());
           }
           return _buildRow(_suggestions[qnt]);
         });
@@ -113,18 +118,19 @@ class _RandomWordsState extends State<RandomWords> {
         final int index = i ~/ 2;
 
         if (index >= _suggestions.length) {
-          _suggestions.addAll(generateWordPairs().take(10));
+          _suggestions.addAll(Repository.instance.Listar());
         }
         return _buildRow(_suggestions[index]);
       },
     );
   }
 
-  Widget _buildRow(WordPair pair) {
+  Widget _buildRow(ParPalavras pair) {
     final alreadySaved = _saved.contains(pair);
+    final ParPalavras par;
     return ListTile(
       title: Text(
-        pair.asPascalCase,
+        pair.palavra,
         style: _biggerFont,
       ),
       tileColor: Colors.white10,
@@ -145,69 +151,15 @@ class _RandomWordsState extends State<RandomWords> {
         },
       ),
       onTap: () {
-        Navigator.of(context).push(
-            MaterialPageRoute(builder: (context) => editPage(context, pair)));
-      },
-    );
-  }
+        
+        int index = Repository.instance.pairList
+            .indexWhere((element) => element.palavra == pair.palavra);
 
-  Widget editPage(BuildContext context, WordPair pair) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(pair.toString()),
-      ),
-      body: SingleChildScrollView(
-        child: SizedBox(
-          width: MediaQuery.of(context).size.width,
-          height: MediaQuery.of(context).size.height,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                TextField(
-                  onChanged: (value) => {firstWord = value},
-                  decoration: InputDecoration(
-                      labelText: 'Primeira Palavra',
-                      border: OutlineInputBorder()),
-                ),
-                SizedBox(
-                  height: 10,
-                ),
-                TextField(
-                  onChanged: (value) => {secondWord = value},
-                  decoration: InputDecoration(
-                      labelText: 'Segunda Palavra',
-                      border: OutlineInputBorder()),
-                ),
-                SizedBox(
-                  height: 13,
-                ),
-                RaisedButton(
-                  onPressed: () {
-                    setState(() {
-                      _suggestions[_suggestions.indexOf(pair)] =
-                          WordPair(firstWord, secondWord);
-                    });
-                    Navigator.pop(context);
-                  },
-                  child: Text('Editar'),
-                ),
-                RaisedButton(
-                  onPressed: () {
-                    setState(() {
-                      _suggestions
-                          .remove(_suggestions[_suggestions.indexOf(pair)]);
-                    });
-                    Navigator.pop(context);
-                  },
-                  child: Text('Apagar'),
-                )
-              ],
-            ),
-          ),
-        ),
-      ),
+        Navigator.pushNamed(context, route.EditPage, arguments: index);
+        setState(() {
+          RandomWords();
+        });
+      },
     );
   }
 
@@ -216,7 +168,7 @@ class _RandomWordsState extends State<RandomWords> {
       final tiles = _saved.map((pair) {
         return ListTile(
             title: Text(
-          pair.asPascalCase,
+          pair.palavra,
           style: _biggerFont,
         ));
       });

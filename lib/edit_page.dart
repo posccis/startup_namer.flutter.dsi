@@ -1,26 +1,33 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:start_up_namer/Data/Repository.dart';
+import 'package:start_up_namer/Models/word_pair.dart';
 import 'package:start_up_namer/main.dart';
 
 class editPage extends StatefulWidget {
-  late String firstWord;
+  final int index;
 
-  late String secondtWord;
-
-  editPage({Key? key}) : super(key: key);
+  editPage({Key? key, required this.index}) : super(key: key);
 
   @override
-  State<editPage> createState() => _editPageState(firstWord, secondtWord);
+  State<editPage> createState() => _editPageState(index);
 }
 
 class _editPageState extends State<editPage> {
+  _editPageState(int indx) {
+    this.index = indx;
+  }
+  String firstWord = "";
+  String secondtWord = "";
+  late int index;
 
-  _editPageState(this.firstWord, this.secondtWord);
-  late String firstWord;
-  late String secondtWord;
   @override
   Widget build(BuildContext context) {
+    final args = ModalRoute.of(context)!.settings.arguments;
     return Scaffold(
+      appBar: AppBar(
+        title: Text('Editar'),
+      ),
       body: SingleChildScrollView(
         child: SizedBox(
           width: MediaQuery.of(context).size.width,
@@ -31,7 +38,11 @@ class _editPageState extends State<editPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextField(
-                  onChanged: (value) => {firstWord = value},
+                  onChanged: (value) {
+                    setState(() {
+                      firstWord = value;
+                    });
+                  },
                   decoration: InputDecoration(
                       labelText: 'Primeira Palavra',
                       border: OutlineInputBorder()),
@@ -40,7 +51,11 @@ class _editPageState extends State<editPage> {
                   height: 10,
                 ),
                 TextField(
-                  onChanged: (value) => {secondtWord = value},
+                  onChanged: (value) {
+                    setState(() {
+                      secondtWord = value;
+                    });
+                  },
                   decoration: InputDecoration(
                       labelText: 'Segunda Palavra',
                       border: OutlineInputBorder()),
@@ -50,10 +65,13 @@ class _editPageState extends State<editPage> {
                 ),
                 RaisedButton(
                   onPressed: () {
-                    List<String> valornovo() {
-                      List<String> lista = [firstWord, secondtWord];
-                      return lista;
-                    }
+                    setState(() {
+                      ParPalavras palavra = ParPalavras(firstWord, secondtWord);
+
+                      Repository.instance.Alterar(this.index, palavra);
+                      Navigator.of(context).push(MaterialPageRoute(
+                          builder: (context) => RandomWords()));
+                    });
                   },
                   child: Text('Editar'),
                 )
@@ -63,10 +81,5 @@ class _editPageState extends State<editPage> {
         ),
       ),
     );
-  }
-
-  List<String> valornovo() {
-    List<String> lista = [firstWord, secondtWord];
-    return lista;
   }
 }
