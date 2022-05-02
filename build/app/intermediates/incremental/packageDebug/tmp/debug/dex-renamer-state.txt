@@ -1,0 +1,4 @@
+#Sun Apr 24 21:49:41 BRT 2022
+base.0=/home/vito/Área de trabalho/flutter/build/app/intermediates/dex/debug/mergeDexDebug/classes.dex
+renamed.0=classes.dex
+path.0=classes.dex

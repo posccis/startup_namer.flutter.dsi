@@ -68,7 +68,7 @@ class _editPageState extends State<editPage> {
                     setState(() {
                       ParPalavras palavra = ParPalavras(firstWord, secondtWord);
 
-                      Repository.instance.Alterar(this.index, palavra);
+                      Repository().Alterar(this.index, palavra);
                       Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) => RandomWords()));
                     });

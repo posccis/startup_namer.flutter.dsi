@@ -2,17 +2,27 @@
 // Use of this source code is governed by a BSD-style license that can be
 // found in the LICENSE file.
 
+import 'dart:async';
 import 'dart:core';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:english_words/english_words.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_database/firebase_database.dart';
+import 'package:firebase_database/ui/utils/stream_subscriber_mixin.dart';
 import 'package:flutter/material.dart';
 import 'package:start_up_namer/Data/Repository.dart';
 import 'package:start_up_namer/Models/word_pair.dart';
 
 import 'package:start_up_namer/Routes/route.dart' as route;
 import 'package:start_up_namer/add_page.dart';
+import 'firebase_options.dart';
 
-void main() {
+void main() async {
+  /*WidgetsFlutterBinding.ensureInitialized();*/
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const MyApp());
 }
 
@@ -49,13 +59,52 @@ class AppController extends ChangeNotifier {
 }
 
 class _RandomWordsState extends State<RandomWords> {
-  final _suggestions = <ParPalavras>[];
+  late var collection;
+  List<ParPalavras> _suggestions = <ParPalavras>[];
   final _saved = <ParPalavras>{};
   final _biggerFont = const TextStyle(fontSize: 18);
   late String firstWord;
   late String secondWord;
+  List<String> _salvos = <String>[];
+  var _results;
+  int quant = 20;
 
   @override
+  void initState() {
+    super.initState();
+    init();
+    getFavs().then((a) {
+      setState(() {
+        _salvos = a;
+      });
+    });
+  }
+
+  void init() async {
+    collection = FirebaseFirestore.instance.collection('Favoritos');
+  }
+
+  Future<List<String>> getFavs() async {
+    _results = await collection.get();
+    List<String> mizera = [];
+    for (var doc in _results.docs) {
+      setState(() {
+        _salvos.add(doc["ParPalava"].toString());
+        mizera.add(doc["ParPalava"].toString());
+      });
+    }
+
+    return mizera;
+  }
+
+  remover(String palavra) async {
+    await collection.doc(palavra).delete();
+  }
+
+  like(String palavra) async {
+    await collection.doc(palavra).set({"ParPalava": palavra});
+  }
+
   Widget build(BuildContext context) {
     return AnimatedBuilder(
         animation: AppController.instance,
@@ -75,7 +124,7 @@ class _RandomWordsState extends State<RandomWords> {
                             AppController.instance.changeView();
                           },
                         ),
-                      ),                      
+                      ),
                       IconButton(
                         onPressed: () {
                           Navigator.pushNamed(context, route.AddPage);
@@ -91,7 +140,6 @@ class _RandomWordsState extends State<RandomWords> {
                         icon: const Icon(Icons.list, color: Colors.black),
                         onPressed: _pushSaved,
                       ),
-
                     ],
                     titleTextStyle: TextStyle(color: Colors.black),
                     backgroundColor: Colors.white,
@@ -104,38 +152,41 @@ class _RandomWordsState extends State<RandomWords> {
 
   Widget _buildGridView() {
     //usar gridview builder
+    _suggestions = Repository().Listar();
     return GridView.builder(
         gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
             crossAxisCount: 2,
             childAspectRatio: 3 / 2,
             crossAxisSpacing: 20,
             mainAxisSpacing: 20),
-        itemBuilder: (BuildContext ctx, index) {
-          final int qnt = index;
-
-          _suggestions.addAll(Repository().Listar());
-
-          return _buildRow(_suggestions[qnt]);
+        itemCount: _suggestions.length,
+        itemBuilder: (BuildContext ctx, int i) {
+          return _buildRow(_suggestions[i].palavra);
         });
   }
 
   Widget _buildSuggestions() {
+    _suggestions = Repository().Listar();
     return ListView.builder(
       padding: const EdgeInsets.all(16),
+      itemCount: _suggestions.length,
       itemBuilder: (BuildContext _context, int i) {
-        _suggestions.addAll(Repository.instance.Listar());
-
-        return _buildRow(_suggestions[i]);
+        return _buildRow(_suggestions[i].palavra);
       },
     );
   }
 
-  Widget _buildRow(ParPalavras pair) {
-    final alreadySaved = _saved.contains(pair);
+  Widget _buildRow(String pair) {
+    getFavs().then((a) {
+      setState(() {
+        _salvos = a;
+      });
+    });
+    var alreadySaved = _salvos.contains(pair);
     final ParPalavras par;
     return ListTile(
       title: Text(
-        pair.palavra,
+        pair,
         style: _biggerFont,
       ),
       tileColor: Colors.white10,
@@ -148,16 +199,16 @@ class _RandomWordsState extends State<RandomWords> {
         onTap: () {
           setState(() {
             if (alreadySaved) {
-              _saved.remove(pair);
+              remover(pair);
             } else {
-              _saved.add(pair);
+              like(pair);
             }
           });
         },
       ),
       onTap: () {
-        int index = Repository.instance.pairList
-            .indexWhere((element) => element.palavra == pair.palavra);
+        int index =
+            Repository().pairList.indexWhere((element) => element == pair);
 
         Navigator.pushNamed(context, route.EditPage, arguments: index);
         setState(() {
@@ -167,12 +218,12 @@ class _RandomWordsState extends State<RandomWords> {
     );
   }
 
-  void _pushSaved() {
+  void _pushSaved() async {
     Navigator.of(context).push(MaterialPageRoute<void>(builder: (context) {
-      final tiles = _saved.map((pair) {
+      final tiles = _salvos.map((pair) {
         return ListTile(
             title: Text(
-          pair.palavra,
+          pair,
           style: _biggerFont,
         ));
       });

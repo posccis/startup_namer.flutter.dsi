@@ -1,7 +1,6 @@
 import 'package:start_up_namer/Models/word_pair.dart';
 
 class Repository {
-  static Repository instance = new Repository();
   List<ParPalavras> pairList = [
     ParPalavras("Pato", "galatico"),
     ParPalavras("Start", "Upper"),
@@ -40,7 +39,6 @@ class Repository {
   }
 
   Alterar(int index, ParPalavras pair) {
-
     pairList[index] = pair;
   }
 

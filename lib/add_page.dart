@@ -5,8 +5,6 @@ import 'package:start_up_namer/Models/word_pair.dart';
 import 'package:start_up_namer/main.dart';
 
 class addPage extends StatefulWidget {
-
-
   addPage({Key? key}) : super(key: key);
 
   @override
@@ -14,14 +12,11 @@ class addPage extends StatefulWidget {
 }
 
 class _addPageState extends State<addPage> {
-
   String firstWord = "";
   String secondtWord = "";
 
-
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Adicionar'),
@@ -66,7 +61,7 @@ class _addPageState extends State<addPage> {
                     setState(() {
                       ParPalavras palavra = ParPalavras(firstWord, secondtWord);
 
-                      Repository.instance.Inserir(palavra);
+                      Repository().Inserir(palavra);
                       Navigator.of(context).push(MaterialPageRoute(
                           builder: (context) => RandomWords()));
                     });
